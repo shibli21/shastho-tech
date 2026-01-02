@@ -1,5 +1,4 @@
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { stripe } from "@better-auth/stripe";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError, betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
@@ -18,7 +17,7 @@ import {
 	organization,
 	twoFactor,
 } from "better-auth/plugins";
-import { Stripe } from "stripe";
+
 import { reactInvitationEmail } from "./email/invitation";
 import { resend } from "./email/resend";
 import { reactResetPasswordEmail } from "./email/reset-password";
@@ -123,51 +122,6 @@ const authOptions = {
 		}),
 		nextCookies(),
 		oneTap(),
-		stripe({
-			stripeClient: new Stripe(process.env.STRIPE_KEY || "sk_test_"),
-			stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-			subscription: {
-				enabled: true,
-				allowReTrialsForDifferentPlans: true,
-				plans: () => {
-					const PRO_PRICE_ID = {
-						default:
-							process.env.STRIPE_PRO_PRICE_ID ??
-							"price_1RoxnRHmTADgihIt4y8c0lVE",
-						annual:
-							process.env.STRIPE_PRO_ANNUAL_PRICE_ID ??
-							"price_1RoxnoHmTADgihItzFvVP8KT",
-					};
-					const PLUS_PRICE_ID = {
-						default:
-							process.env.STRIPE_PLUS_PRICE_ID ??
-							"price_1RoxnJHmTADgihIthZTLmrPn",
-						annual:
-							process.env.STRIPE_PLUS_ANNUAL_PRICE_ID ??
-							"price_1Roxo5HmTADgihItEbJu5llL",
-					};
-
-					return [
-						{
-							name: "Plus",
-							priceId: PLUS_PRICE_ID.default,
-							annualDiscountPriceId: PLUS_PRICE_ID.annual,
-							freeTrial: {
-								days: 7,
-							},
-						},
-						{
-							name: "Pro",
-							priceId: PRO_PRICE_ID.default,
-							annualDiscountPriceId: PRO_PRICE_ID.annual,
-							freeTrial: {
-								days: 7,
-							},
-						},
-					];
-				},
-			},
-		}),
 		deviceAuthorization({
 			expiresIn: "3min",
 			interval: "5s",
