@@ -1,12 +1,9 @@
-import { oauthProviderClient } from "@better-auth/oauth-provider/client";
-import { passkeyClient } from "@better-auth/passkey/client";
-import { stripeClient } from "@better-auth/stripe/client";
+
 import {
 	adminClient,
 	customSessionClient,
 	deviceAuthorizationClient,
 	lastLoginMethodClient,
-	multiSessionClient,
 	oneTapClient,
 	organizationClient,
 	twoFactorClient,
@@ -23,18 +20,12 @@ export const authClient = createAuthClient({
 				window.location.href = "/two-factor";
 			},
 		}),
-		passkeyClient(),
 		adminClient(),
-		multiSessionClient(),
 		oneTapClient({
 			clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
 			promptOptions: {
 				maxAttempts: 1,
 			},
-		}),
-		oauthProviderClient(),
-		stripeClient({
-			subscription: true,
 		}),
 		customSessionClient<typeof auth>(),
 		deviceAuthorizationClient(),
