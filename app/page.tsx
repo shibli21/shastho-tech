@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
-import Navbar from "./_components/Navbar";
+import React, { useState, useCallback } from "react";
 import Hero from "./_components/Hero";
 import TestGrid from "./_components/TestGrid";
 import PackageGrid from "./_components/PackageGrid";
@@ -10,20 +9,11 @@ import Testimonials from "./_components/Testimonials";
 import BookingModal from "./_components/BookingModal";
 import Dashboard from "./_components/Dashboard";
 import { LabTest, Booking, User, BookingStatus } from "@/types/types";
-import { LAB_TESTS } from "@/constants/constants";
-import {
-  ShoppingBag,
-  ChevronRight,
-  X,
-  Phone,
-  Mail,
-  Instagram,
-  Facebook,
-  Twitter,
-  Globe,
-  ArrowUp,
-  Activity,
-} from "lucide-react";
+import { ShoppingBag, ChevronRight, X, Phone, Activity } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 export default function Page() {
   const [activeView, setActiveView] = useState<"home" | "dashboard" | "admin">("home");
@@ -31,12 +21,12 @@ export default function Page() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  // Mock initial bookings for the Dashboard demo
-  useEffect(() => {
-    setCurrentUser({ id: "u1", name: "John Doe", email: "john@example.com", phone: "01712345678" });
-  }, []);
+  const [currentUser] = useState<User | null>({
+    id: "u1",
+    name: "John Doe",
+    email: "john@example.com",
+    phone: "01712345678",
+  });
 
   const addToCart = useCallback((test: LabTest) => {
     setCart((prev) => {
@@ -49,20 +39,7 @@ export default function Page() {
     setCart((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const addTestByName = useCallback(
-    (name: string) => {
-      const lowerName = name.toLowerCase();
-      const found = LAB_TESTS.find(
-        (t) => t.name.toLowerCase().includes(lowerName) || lowerName.includes(t.name.toLowerCase())
-      );
-      if (found) {
-        addToCart(found);
-      }
-    },
-    [addToCart]
-  );
-
-  const handleCreateBooking = (bookingData: any) => {
+  const handleCreateBooking = (bookingData: Omit<Booking, "id" | "userId" | "status" | "createdAt">) => {
     const newBooking: Booking = {
       id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       userId: currentUser?.id || "guest",
@@ -89,24 +66,26 @@ export default function Page() {
         <>
           <Hero />
           <div className="max-w-7xl mx-auto px-4 -mt-10 relative z-20">
-            <div className="bg-background rounded-3xl p-8 shadow-xl border border-border grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <p className="text-3xl font-black text-foreground">50k+</p>
-                <p className="text-sm font-medium text-muted-foreground">Happy Patients</p>
-              </div>
-              <div className="text-center border-l border-border">
-                <p className="text-3xl font-black text-foreground">200+</p>
-                <p className="text-sm font-medium text-muted-foreground">Certified Labs</p>
-              </div>
-              <div className="text-center border-l border-border">
-                <p className="text-3xl font-black text-foreground">100%</p>
-                <p className="text-sm font-medium text-muted-foreground">Accuracy Rate</p>
-              </div>
-              <div className="text-center border-l border-border">
-                <p className="text-3xl font-black text-foreground">24h</p>
-                <p className="text-sm font-medium text-muted-foreground">Fast Reporting</p>
-              </div>
-            </div>
+            <Card className="rounded-3xl p-8 shadow-xl">
+              <CardContent className="p-0 grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="text-center">
+                  <p className="text-3xl font-black text-foreground">50k+</p>
+                  <p className="text-sm font-medium text-muted-foreground">Happy Patients</p>
+                </div>
+                <div className="text-center md:border-l border-border">
+                  <p className="text-3xl font-black text-foreground">200+</p>
+                  <p className="text-sm font-medium text-muted-foreground">Certified Labs</p>
+                </div>
+                <div className="text-center border-l border-border md:border-l">
+                  <p className="text-3xl font-black text-foreground">100%</p>
+                  <p className="text-sm font-medium text-muted-foreground">Accuracy Rate</p>
+                </div>
+                <div className="text-center md:border-l border-border">
+                  <p className="text-3xl font-black text-foreground">24h</p>
+                  <p className="text-sm font-medium text-muted-foreground">Fast Reporting</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           <Process />
           <TestGrid onAddToCart={addToCart} />
@@ -202,85 +181,68 @@ export default function Page() {
           </button>
         )}
 
-        {/* Checkout Sidebar Overlay */}
-        {isCheckoutOpen && (
-          <div className="fixed inset-0 z-[90] overflow-hidden">
-            <div
-              className="absolute inset-0 bg-foreground/60 backdrop-blur-sm transition-opacity"
-              onClick={() => setIsCheckoutOpen(false)}
-            />
-            <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-background shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-              <div className="p-6 border-b flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-primary/10 p-2 rounded-xl">
-                    <ShoppingBag className="text-primary w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold">Your Selection</h3>
-                </div>
-                <button
-                  onClick={() => setIsCheckoutOpen(false)}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+        {/* Checkout Sidebar */}
+        <Sheet open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+          <SheetContent className="flex flex-col sm:max-w-md">
+            <SheetHeader>
+              <div className="flex items-center gap-3">
+                <ShoppingBag className="w-5 h-5" />
+                <SheetTitle>Your Selection</SheetTitle>
               </div>
+              <SheetDescription className="hidden">
+                Review the items in your cart before proceeding to checkout.
+              </SheetDescription>
+            </SheetHeader>
 
-              <div className="flex-grow overflow-y-auto p-6 space-y-6">
-                {cart.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="bg-muted w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <ShoppingBag className="w-12 h-12 text-muted-foreground/40" />
-                    </div>
-                    <p className="text-muted-foreground font-medium">Your cart is empty.</p>
+            <div className="grow overflow-y-auto space-y-4 py-4">
+              {cart.length === 0 ? (
+                <div className="text-center py-20">
+                  <div className="bg-muted w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <ShoppingBag className="w-12 h-12 text-muted-foreground/40" />
                   </div>
-                ) : (
-                  cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start justify-between group bg-muted p-4 rounded-2xl border border-transparent hover:border-primary/20 transition-all"
-                    >
+                  <p className="text-muted-foreground font-medium">Your cart is empty.</p>
+                </div>
+              ) : (
+                cart.map((item) => (
+                  <Card key={item.id}>
+                    <CardContent className="p-4 flex items-center justify-between">
                       <div>
-                        <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-muted-foreground font-medium mt-1">{item.category}</p>
+                        <h4 className="font-bold">{item.name}</h4>
+                        <p className="text-xs text-muted-foreground">{item.category}</p>
                       </div>
                       <div className="flex items-center space-x-4">
                         <span className="font-bold text-primary">৳{item.price}</span>
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-muted-foreground/40 hover:text-destructive transition-colors p-1"
-                        >
+                        <Button variant="ghost" size="icon-sm" onClick={() => removeFromCart(item.id)}>
                           <X className="w-4 h-4" />
-                        </button>
+                        </Button>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
 
-              {cart.length > 0 && (
-                <div className="p-8 border-t bg-background space-y-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+            {cart.length > 0 && (
+              <SheetFooter className="flex flex-col gap-4 pt-4 border-t">
+                <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
                     <span>Subtotal</span>
                     <span>৳{total}</span>
                   </div>
-                  <div className="flex justify-between items-center text-2xl font-black text-foreground pt-4 border-t border-border">
-                    <span>Total</span>
-                    <span className="text-primary">৳{total}</span>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold">Total</span>
+                    <span className="text-2xl font-bold text-primary">৳{total}</span>
                   </div>
-                  <button
-                    onClick={() => setIsBookingModalOpen(true)}
-                    className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/30 flex items-center justify-center space-x-2 group mt-6"
-                  >
-                    <span>Proceed to Schedule</span>
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </button>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
+                <Button onClick={() => setIsBookingModalOpen(true)} className="w-full gap-2">
+                  <span>Proceed to Schedule</span>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </SheetFooter>
+            )}
+          </SheetContent>
+        </Sheet>
 
         <BookingModal
           isOpen={isBookingModalOpen}

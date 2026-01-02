@@ -1,7 +1,12 @@
 import React from "react";
-// Added MapPin to the imports to resolve the "Cannot find name 'MapPin'" error.
 import { Package, Clock, FileText, Download, ArrowRight, Activity, TrendingUp, MapPin } from "lucide-react";
 import { Booking, BookingStatus } from "@/types/types";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface DashboardProps {
   bookings: Booking[];
@@ -10,21 +15,6 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ bookings, isAdmin, onUpdateStatus }) => {
-  const getStatusColor = (status: BookingStatus) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-100 text-emerald-700";
-      case "processing":
-        return "bg-sky-100 text-sky-700";
-      case "collected":
-        return "bg-purple-100 text-purple-700";
-      case "confirmed":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-slate-100 text-slate-600";
-    }
-  };
-
   const statusOrder: BookingStatus[] = ["pending", "confirmed", "collected", "processing", "completed"];
 
   return (
@@ -39,27 +29,33 @@ const Dashboard: React.FC<DashboardProps> = ({ bookings, isAdmin, onUpdateStatus
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="bg-background p-4 rounded-3xl shadow-sm border border-border flex items-center space-x-4">
-            <div className="bg-primary/10 p-3 rounded-2xl text-primary">
-              <Activity className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-muted-foreground/60 uppercase">Active Tests</p>
-              <p className="text-xl font-black text-foreground">
-                {bookings.filter((b) => b.status !== "completed").length}
-              </p>
-            </div>
-          </div>
+          <Card>
+            <CardContent className="flex flex-row items-center space-x-4">
+              <div className="bg-primary/10 p-3 rounded-xl text-primary shrink-0">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tight">Active Tests</p>
+                <p className="text-lg font-black text-foreground leading-none">
+                  {bookings.filter((b) => b.status !== "completed").length}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
           {!isAdmin && (
-            <div className="bg-background p-4 rounded-3xl shadow-sm border border-border flex items-center space-x-4">
-              <div className="bg-accent/10 p-3 rounded-2xl text-accent">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-muted-foreground/60 uppercase">Health Score</p>
-                <p className="text-xl font-black text-foreground">82/100</p>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="flex flex-row items-center space-x-4">
+                <div className="bg-accent/10 p-3 rounded-xl text-accent shrink-0">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tight">
+                    Health Score
+                  </p>
+                  <p className="text-lg font-black text-foreground leading-none">82/100</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
@@ -72,158 +68,177 @@ const Dashboard: React.FC<DashboardProps> = ({ bookings, isAdmin, onUpdateStatus
           </h3>
 
           {bookings.length === 0 ? (
-            <div className="bg-background p-12 rounded-[2.5rem] border border-dashed border-border text-center">
-              <Package className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-              <p className="text-muted-foreground font-bold">No bookings found.</p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <Package className="w-12 h-12 text-muted-foreground/20 mb-4" />
+                <p className="text-muted-foreground font-medium">No bookings found.</p>
+              </CardContent>
+            </Card>
           ) : (
             bookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="bg-background rounded-[2rem] p-8 border border-border shadow-sm hover:shadow-xl transition-all group"
-              >
-                <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-muted p-4 rounded-2xl">
-                      <Clock className="w-6 h-6 text-muted-foreground/40" />
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-3 mb-1">
-                        <span className="font-black text-lg">ID: {booking.id}</span>
-                        <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColor(
-                            booking.status
-                          )}`}
-                        >
-                          {booking.status}
-                        </span>
+              <Card key={booking.id}>
+                <CardHeader className="border-b pb-6">
+                  <div className="flex flex-col md:flex-row justify-between gap-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="bg-muted p-3 rounded-xl">
+                        <Clock className="w-5 h-5 text-muted-foreground/40" />
                       </div>
-                      <p className="text-muted-foreground text-sm font-medium">
-                        Patient: <span className="text-foreground font-bold">{booking.patientName}</span> •{" "}
-                        {booking.date}
-                      </p>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg font-black">ID: {booking.id}</CardTitle>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "text-[10px] font-black uppercase tracking-widest px-2 py-0.5",
+                              booking.status === "completed" && "bg-emerald-50 text-emerald-700 border-emerald-100",
+                              booking.status === "processing" && "bg-sky-50 text-sky-700 border-sky-100",
+                              booking.status === "collected" && "bg-purple-50 text-purple-700 border-purple-100",
+                              booking.status === "confirmed" && "bg-blue-50 text-blue-700 border-blue-100"
+                            )}
+                          >
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <CardDescription className="font-medium">
+                          Patient: <span className="text-foreground font-bold">{booking.patientName}</span> •{" "}
+                          {booking.date}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="md:text-right">
+                      <p className="text-2xl font-black text-foreground leading-none">৳{booking.total}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase mt-1">Total Bill</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black text-foreground">৳{booking.total}</p>
-                    <p className="text-xs font-bold text-muted-foreground/60">Total Bill</p>
-                  </div>
-                </div>
+                </CardHeader>
 
-                {/* Progress Bar */}
-                <div className="relative mb-8">
-                  <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 rounded-full" />
-                  <div
-                    className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 rounded-full transition-all duration-1000"
-                    style={{ width: `${(statusOrder.indexOf(booking.status) / (statusOrder.length - 1)) * 100}%` }}
-                  />
-                  <div className="relative flex justify-between">
-                    {statusOrder.map((s, idx) => (
-                      <div key={s} className="flex flex-col items-center">
-                        <div
-                          className={`w-4 h-4 rounded-full border-4 border-background shadow-sm z-10 ${
-                            statusOrder.indexOf(booking.status) >= idx ? "bg-primary" : "bg-muted"
-                          }`}
-                        />
-                        <span className="text-[10px] font-bold text-muted-foreground/60 mt-2 uppercase">{s}</span>
-                      </div>
+                <CardContent className="pt-6 space-y-8">
+                  {/* Progress Bar */}
+                  <div className="relative">
+                    <Progress
+                      value={(statusOrder.indexOf(booking.status) / (statusOrder.length - 1)) * 100}
+                      className="h-1"
+                    />
+                    <div className="relative flex justify-between">
+                      {statusOrder.map((s, idx) => (
+                        <div key={s} className="flex flex-col items-center">
+                          <div
+                            className={`w-3 h-3 rounded-full border-2 border-background shadow-sm z-10 ${
+                              statusOrder.indexOf(booking.status) >= idx ? "bg-primary" : "bg-muted"
+                            }`}
+                          />
+                          <span className="text-[9px] font-bold text-muted-foreground/50 mt-2 uppercase">{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {booking.tests.map((t) => (
+                      <Badge
+                        key={t.id}
+                        variant="outline"
+                        className="rounded-lg text-[10px] font-bold text-muted-foreground px-2 py-0"
+                      >
+                        {t.name}
+                      </Badge>
                     ))}
                   </div>
-                </div>
+                </CardContent>
 
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {booking.tests.map((t) => (
-                    <span
-                      key={t.id}
-                      className="bg-muted px-3 py-1.5 rounded-xl text-xs font-bold text-muted-foreground"
-                    >
-                      {t.name}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-6 border-t border-border/50">
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="w-4 h-4 text-muted-foreground/40" />
-                    <span className="text-sm text-muted-foreground font-medium truncate max-w-[200px]">
-                      {booking.address}
-                    </span>
+                <CardFooter className="border-t pt-6 flex flex-row items-center justify-between">
+                  <div className="flex items-center space-x-3 text-muted-foreground">
+                    <MapPin className="w-4 h-4 opacity-40" />
+                    <span className="text-xs font-medium truncate max-w-[200px]">{booking.address}</span>
                   </div>
                   {isAdmin ? (
-                    <div className="flex space-x-2">
-                      <select
-                        value={booking.status}
-                        onChange={(e) => onUpdateStatus?.(booking.id, e.target.value as BookingStatus)}
-                        className="bg-foreground text-background text-xs font-bold py-2 px-4 rounded-xl outline-none"
-                      >
+                    <Select
+                      value={booking.status}
+                      onValueChange={(value) => onUpdateStatus?.(booking.id, value as BookingStatus)}
+                    >
+                      <SelectTrigger className="w-[140px] h-9 text-xs font-bold rounded-xl">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
                         {statusOrder.map((s) => (
-                          <option key={s} value={s}>
+                          <SelectItem key={s} value={s} className="text-xs font-bold">
                             {s.toUpperCase()}
-                          </option>
+                          </SelectItem>
                         ))}
-                      </select>
-                    </div>
+                      </SelectContent>
+                    </Select>
                   ) : booking.status === "completed" ? (
-                    <button className="flex items-center space-x-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-                      <FileText className="w-4 h-4" />
+                    <Button size="sm" className="rounded-xl h-9">
+                      <FileText className="w-4 h-4 mr-2" />
                       <span>View Report</span>
-                    </button>
+                    </Button>
                   ) : (
-                    <span className="text-sm font-bold text-muted-foreground/60 flex items-center italic">
+                    <span className="text-xs font-bold text-muted-foreground/60 flex items-center italic">
                       Processing Sample...
                     </span>
                   )}
-                </div>
-              </div>
+                </CardFooter>
+              </Card>
             ))
           )}
         </div>
 
-        <div className="space-y-8">
-          <div className="bg-background p-8 rounded-[2.5rem] shadow-sm border border-border">
-            <h3 className="text-xl font-bold text-foreground mb-6 flex items-center">
-              <Download className="w-5 h-5 mr-2 text-primary" />
-              Recent Reports
-            </h3>
-            <div className="space-y-4">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold flex items-center">
+                <Download className="w-5 h-5 mr-2 text-primary" />
+                Recent Reports
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-4 rounded-2xl bg-muted hover:bg-primary/5 transition-colors group"
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-primary/5 transition-colors group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="bg-background p-2 rounded-xl text-primary">
-                      <FileText className="w-5 h-5" />
+                    <div className="bg-background p-2 rounded-lg text-primary">
+                      <FileText className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">Blood Profile - Oct {10 + i}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">Digital Lab Signature</p>
+                      <p className="text-xs font-bold text-foreground leading-tight">Blood Profile - Oct {10 + i}</p>
+                      <p className="text-[9px] font-bold text-muted-foreground/60 uppercase">Digital Lab Signature</p>
                     </div>
                   </div>
-                  <button className="text-muted-foreground/40 hover:text-primary transition-colors">
-                    <Download className="w-5 h-5" />
-                  </button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-primary">
+                    <Download className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
-            </div>
-            <button className="w-full mt-6 py-4 rounded-2xl bg-foreground text-background font-bold text-sm flex items-center justify-center space-x-2">
-              <span>Visit Report Center</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full font-bold text-xs h-10 rounded-xl">
+                <span>Visit Report Center</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardFooter>
+          </Card>
 
-          <div className="bg-primary p-8 rounded-[2.5rem] text-primary-foreground relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Activity className="w-32 h-32" />
+          <Card className="bg-primary text-primary-foreground overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+              <Activity className="w-24 h-24" />
             </div>
-            <h3 className="text-xl font-black mb-2 relative z-10">Health Insights</h3>
-            <p className="text-primary-foreground/80 text-sm mb-6 relative z-10">
-              Your Vitamin D levels have improved by 15% since last month. Keep up the balanced diet!
-            </p>
-            <button className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border border-primary-foreground/20 px-6 py-3 rounded-2xl font-bold text-sm transition-all relative z-10">
-              View Analytics
-            </button>
-          </div>
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-lg font-black leading-tight">Health Insights</CardTitle>
+              <CardDescription className="text-primary-foreground/80 font-medium text-xs leading-relaxed">
+                Your Vitamin D levels have improved by 15% since last month. Keep up the balanced diet!
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="relative z-10">
+              <Button
+                variant="outline"
+                className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/20 rounded-xl w-full text-xs h-9"
+              >
+                View Analytics
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </div>
     </div>
