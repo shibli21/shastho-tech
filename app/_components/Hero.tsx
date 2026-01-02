@@ -1,6 +1,7 @@
 import React from "react";
 import NextImage from "next/image";
 import { ShieldCheck, Clock, MapPin, ArrowRight, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Hero: React.FC = () => {
   return (
@@ -19,7 +20,7 @@ const Hero: React.FC = () => {
 
             <h1 className="text-5xl lg:text-7xl font-extrabold text-foreground leading-[1.1]">
               Quality Diagnostic <br />
-              <span className="text-gradient">Tests at Home</span>
+              <span className="text-primary">Tests at Home</span>
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
@@ -28,13 +29,13 @@ const Hero: React.FC = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-primary text-primary-foreground px-8 py-4 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/30 flex items-center justify-center space-x-2 group">
+              <Button size="lg">
                 <span>Book a Test Now</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button className="bg-background text-foreground border-2 border-border px-8 py-4 rounded-2xl font-bold text-lg hover:border-primary hover:text-primary transition-all flex items-center justify-center">
+              </Button>
+              <Button size="lg" variant="outline">
                 View Health Packages
-              </button>
+              </Button>
             </div>
 
             <div className="flex items-center space-x-8 pt-4">

@@ -1,6 +1,7 @@
 import React from "react";
-import Image from "next/image";
 import { Star, Quote } from "lucide-react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const testimonials = [
   {
@@ -49,22 +50,27 @@ const Testimonials: React.FC = () => {
 
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t, idx) => (
-            <div
-              key={idx}
-              className="bg-background p-8 rounded-[2rem] shadow-sm border border-border hover:shadow-xl transition-shadow relative group"
-            >
+            <Card key={idx} className="relative group overflow-hidden">
               <Quote className="absolute top-8 right-8 w-10 h-10 text-muted-foreground/10 group-hover:text-primary/10 transition-colors" />
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="relative w-14 h-14 rounded-2xl overflow-hidden shrink-0">
-                  <Image src={t.image} alt={t.name} fill className="object-cover" />
-                </div>
+              <CardHeader className="flex flex-row items-center space-x-4 space-y-0">
+                <Avatar className="w-14 h-14 rounded-2xl">
+                  <AvatarImage src={t.image} alt={t.name} className="object-cover" />
+                  <AvatarFallback>
+                    {t.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <h4 className="font-bold text-foreground">{t.name}</h4>
                   <p className="text-xs font-medium text-muted-foreground">{t.role}</p>
                 </div>
-              </div>
-              <p className="text-muted-foreground leading-relaxed italic">&ldquo;{t.content}&rdquo;</p>
-            </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed italic">&ldquo;{t.content}&rdquo;</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

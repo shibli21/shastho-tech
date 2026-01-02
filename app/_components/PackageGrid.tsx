@@ -1,6 +1,7 @@
 import React from "react";
 import { Check, ArrowRight, Zap } from "lucide-react";
 import { HEALTH_PACKAGES } from "@/constants/constants";
+import { Button } from "@/components/ui/button";
 
 const PackageGrid: React.FC = () => {
   return (
@@ -53,22 +54,16 @@ const PackageGrid: React.FC = () => {
                       {test}
                     </div>
                   ))}
-                  <button className="text-primary text-xs font-bold hover:underline">
+                  <Button variant="link" size="xs">
                     View All {pkg.testsCount} Tests
-                  </button>
+                  </Button>
                 </div>
               </div>
 
-              <button
-                className={`w-full py-5 rounded-2xl font-bold transition-all flex items-center justify-center group ${
-                  pkg.isPopular
-                    ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30 hover:bg-primary/90"
-                    : "bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
-              >
+              <Button variant={pkg.isPopular ? "default" : "outline"} size="lg">
                 <span>Select Package</span>
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
