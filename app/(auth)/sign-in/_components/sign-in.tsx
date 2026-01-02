@@ -1,17 +1,21 @@
 "use client";
 
-import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SignInForm } from "@/components/forms/sign-in-form";
-import { LastUsedIndicator } from "@/components/last-used-indicator";
+import { SignUpForm } from "@/components/forms/sign-up-form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldSeparator } from "@/components/ui/field";
 import { authClient } from "@/lib/auth-client";
 import { getCallbackURL } from "@/lib/shared";
 import { cn } from "@/lib/utils";
+import { LastUsedIndicator } from "@/components/last-used-indicator";
 
 export default function SignIn() {
+  const [view, setView] = useState<"sign-in" | "sign-up">("sign-in");
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const params = useSearchParams();
@@ -20,64 +24,117 @@ export default function SignIn() {
     setIsMounted(true);
   }, []);
 
-  return (
-    <Card className="w-full rounded-none">
-      <CardHeader>
-        <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
-        <CardDescription className="text-xs md:text-sm">
-          Enter your email below to login to your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4">
-          <SignInForm onSuccess={() => router.push(getCallbackURL(params))} callbackURL="/dashboard" />
+  const handleSignInWithGoogle = async () => {
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/dashboard",
+    });
+  };
 
-          {/* OAuth Buttons */}
-          <div className={cn("w-full gap-2 flex items-center", "justify-between flex-col")}>
-            <Button
-              variant="outline"
-              className={cn("w-full gap-2 flex relative")}
-              onClick={async () => {
-                await authClient.signIn.social({
-                  provider: "google",
-                  callbackURL: "/dashboard",
-                });
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="0.98em" height="1em" viewBox="0 0 256 262">
-                <path
-                  fill="#4285F4"
-                  d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
-                ></path>
-                <path
-                  fill="#34A853"
-                  d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
-                ></path>
-                <path
-                  fill="#FBBC05"
-                  d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"
-                ></path>
-                <path
-                  fill="#EB4335"
-                  d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
-                ></path>
-              </svg>
-              <span>Sign in with Google</span>
-              {isMounted && authClient.isLastUsedLoginMethod("google") && <LastUsedIndicator />}
-            </Button>
+  return (
+    <div className={cn("flex flex-col gap-6 w-full max-w-4xl mx-auto")}>
+      <Card className="overflow-hidden p-0">
+        <CardContent className="grid p-0 md:grid-cols-2">
+          <div className="p-6 md:p-8 overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              {view === "sign-in" ? (
+                <motion.div
+                  key="sign-in"
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: 20, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                >
+                  <FieldGroup>
+                    <div className="flex flex-col items-center gap-2 text-center mb-6">
+                      <h1 className="text-2xl font-bold">Welcome back</h1>
+                      <p className="text-muted-foreground text-balance">Login to your Shastho Tech account</p>
+                    </div>
+
+                    <SignInForm onSuccess={() => router.push(getCallbackURL(params))} callbackURL="/dashboard" />
+
+                    <Field className="mt-4">
+                      <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                        Or continue with
+                      </FieldSeparator>
+                    </Field>
+
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        className="relative w-full"
+                        onClick={handleSignInWithGoogle}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5">
+                          <path
+                            d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span>Continue with Google</span>
+                        {isMounted && authClient.isLastUsedLoginMethod("google") && <LastUsedIndicator />}
+                      </Button>
+                    </div>
+
+                    <FieldDescription className="text-center mt-6">
+                      Don&apos;t have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setView("sign-up")}
+                        className="underline underline-offset-4 hover:text-primary font-medium"
+                      >
+                        Sign up
+                      </button>
+                    </FieldDescription>
+                  </FieldGroup>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="sign-up"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -20, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                >
+                  <FieldGroup>
+                    <div className="flex flex-col items-center gap-2 text-center mb-6">
+                      <h1 className="text-2xl font-bold">Create an account</h1>
+                      <p className="text-muted-foreground text-balance">
+                        Enter your details below to create your account
+                      </p>
+                    </div>
+
+                    <SignUpForm onSuccess={() => setView("sign-in")} callbackURL="/dashboard" />
+
+                    <FieldDescription className="text-center mt-6">
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setView("sign-in")}
+                        className="underline underline-offset-4 hover:text-primary font-medium"
+                      >
+                        Login
+                      </button>
+                    </FieldDescription>
+                  </FieldGroup>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <div className="flex justify-center w-full border-t pt-4">
-          <p className="text-center text-xs text-neutral-500">
-            built with{" "}
-            <Link href="https://better-auth.com" className="underline" target="_blank">
-              <span className="dark:text-white/70 cursor-pointer">better-auth.</span>
-            </Link>
-          </p>
-        </div>
-      </CardFooter>
-    </Card>
+          <div className="bg-muted relative hidden md:block">
+            <Image
+              src="/doctor.png"
+              alt="Sign in"
+              fill
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <FieldDescription className="px-6 text-center">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </FieldDescription>
+    </div>
   );
 }
