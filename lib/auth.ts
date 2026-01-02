@@ -326,7 +326,7 @@ export const auth = betterAuth({
 			{ shouldMutateListDeviceSessionsEndpoint: true },
 		),
 	],
-});
+} satisfies BetterAuthOptions);
 
 export type Session = typeof auth.$Infer.Session;
 export type ActiveOrganization = typeof auth.$Infer.ActiveOrganization;
