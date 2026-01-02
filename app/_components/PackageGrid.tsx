@@ -1,9 +1,24 @@
 import React from "react";
 import { Check, ArrowRight, Zap } from "lucide-react";
-import { HEALTH_PACKAGES } from "@/constants/constants";
 import { Button } from "@/components/ui/button";
 
-const PackageGrid: React.FC = () => {
+export interface PublicPackage {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  discountPrice: number | null;
+  isPopular: boolean | null;
+  recommendedFor: string | null;
+  packageTests: { test: { name: string } }[];
+}
+
+interface PackageGridProps {
+  packages: PublicPackage[];
+}
+
+const PackageGrid: React.FC<PackageGridProps> = ({ packages }) => {
   return (
     <section id="packages" className="py-24 gradient-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,7 +31,7 @@ const PackageGrid: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {HEALTH_PACKAGES.map((pkg) => (
+          {packages.map((pkg) => (
             <div
               key={pkg.id}
               className={`relative bg-background rounded-[2rem] p-8 shadow-sm transition-all duration-500 hover:shadow-2xl flex flex-col ${
@@ -32,7 +47,7 @@ const PackageGrid: React.FC = () => {
 
               <div className="mb-8">
                 <h3 className="text-2xl font-extrabold text-foreground mb-2">{pkg.name}</h3>
-                <p className="text-muted-foreground text-sm font-medium">{pkg.recommendedFor}</p>
+                <p className="text-muted-foreground text-sm font-medium">{pkg.recommendedFor || "General Health"}</p>
               </div>
 
               <div className="mb-8 flex items-baseline space-x-2">
@@ -45,17 +60,21 @@ const PackageGrid: React.FC = () => {
               <div className="space-y-4 mb-10 grow">
                 <p className="text-sm font-bold text-foreground flex items-center">
                   <Check className="w-5 h-5 text-primary mr-2" />
-                  {pkg.testsCount} Essential Tests Included:
+                  {pkg.packageTests.length} Essential Tests Included:
                 </p>
                 <div className="space-y-3">
-                  {pkg.testList.map((test: string, idx: number) => (
+                  {pkg.packageTests.slice(0, 5).map((pt, idx) => (
                     <div key={idx} className="flex items-center text-sm text-muted-foreground">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary/20 mr-3"></div>
-                      {test}
+                      {pt.test.name}
                     </div>
                   ))}
+                  {pkg.packageTests.length > 5 && (
+                    <div className="text-xs text-muted-foreground pl-5">+ {pkg.packageTests.length - 5} more tests</div>
+                  )}
+                  {/* TODO: Add link/modal to view all tests */}
                   <Button variant="link" size="xs">
-                    View All {pkg.testsCount} Tests
+                    View All {pkg.packageTests.length} Tests
                   </Button>
                 </div>
               </div>

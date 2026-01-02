@@ -1,27 +1,53 @@
 import React, { useState } from "react";
 import { Plus, Clock, Info } from "lucide-react";
-import { LAB_TESTS } from "@/constants/constants";
 import { LabTest } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
-interface TestGridProps {
-  onAddToCart: (test: LabTest) => void;
+// Define a type that matches what our server action returns, effectively extending/replacing parts of LabTest
+export interface PublicTest {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  turnaroundTime: string | null;
+  price: number;
+  labCount: number;
+  fastingRequired: boolean | null;
 }
 
-const TestGrid: React.FC<TestGridProps> = ({ onAddToCart }) => {
+interface TestGridProps {
+  tests: PublicTest[];
+  onAddToCart: (test: LabTest) => void; // Keeping LabTest compatibility for now
+}
+
+const TestGrid: React.FC<TestGridProps> = ({ tests, onAddToCart }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const categories = ["All", ...Array.from(new Set(LAB_TESTS.map((t) => t.category)))];
+  const categories = ["All", ...Array.from(new Set(tests.map((t) => t.category).filter(Boolean)))];
 
-  const filteredTests = LAB_TESTS.filter((test) => {
+  const filteredTests = tests.filter((test) => {
     const matchesSearch = test.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === "All" || test.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleAdd = (test: PublicTest) => {
+    // Adapt PublicTest to LabTest for cart compatibility
+    const cartItem: LabTest = {
+      id: test.id,
+      name: test.name,
+      category: test.category || "General",
+      price: test.price,
+      description: test.description || "",
+      turnaroundTime: test.turnaroundTime || "",
+      preparation: test.fastingRequired ? "Fasting Required" : "",
+    };
+    onAddToCart(cartItem);
+  };
 
   return (
     <section id="tests" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,8 +55,8 @@ const TestGrid: React.FC<TestGridProps> = ({ onAddToCart }) => {
         <div>
           <h2 className="text-4xl font-extrabold text-foreground mb-4">Diagnostic Lab Tests</h2>
           <p className="text-muted-foreground max-w-xl">
-            Search and choose from over 500+ specialized diagnostic tests. Certified phlebotomists will collect samples
-            at your doorstep.
+            Search and choose from specialized diagnostic tests. Certified phlebotomists will collect samples at your
+            doorstep.
           </p>
         </div>
 
@@ -68,7 +94,7 @@ const TestGrid: React.FC<TestGridProps> = ({ onAddToCart }) => {
                 </span>
                 <div className="flex items-center text-muted-foreground/60 text-xs font-medium">
                   <Clock className="w-3.5 h-3.5 mr-1" />
-                  {test.turnaroundTime}
+                  {test.turnaroundTime || "24-48h"}
                 </div>
               </div>
               <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
@@ -80,10 +106,16 @@ const TestGrid: React.FC<TestGridProps> = ({ onAddToCart }) => {
             <CardContent className="mt-auto pt-4 border-t border-border/50">
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <span className="text-2xl font-black text-foreground">৳{test.price}</span>
-                  <span className="text-[10px] font-bold text-muted-foreground/60">Taxes Included</span>
+                  {test.price > 0 ? (
+                    <>
+                      <span className="text-2xl font-black text-foreground">৳{test.price}</span>
+                      <span className="text-[10px] font-bold text-muted-foreground/60">Starting Price</span>
+                    </>
+                  ) : (
+                    <span className="text-sm font-bold text-muted-foreground">Price varies by lab</span>
+                  )}
                 </div>
-                <Button onClick={() => onAddToCart(test)} size="icon-lg">
+                <Button onClick={() => handleAdd(test)} size="icon-lg">
                   <Plus />
                 </Button>
               </div>
