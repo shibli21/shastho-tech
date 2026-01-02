@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, MapPin, CreditCard, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { User, MapPin, CreditCard, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { LabTest, Booking } from "@/types/types";
 import {
   Dialog,
@@ -16,16 +16,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { createOrder } from "@/app/actions/orders";
+import { toast } from "sonner";
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   cart: LabTest[];
-  onConfirm: (bookingData: Omit<Booking, "id" | "userId" | "status" | "createdAt">) => void;
+  onConfirm: (bookingData: Partial<Booking>) => void;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onConfirm }) => {
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     patientName: "",
     patientAge: "",
@@ -40,12 +43,26 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onCo
   const handleNext = () => setStep((s: number) => s + 1);
   const handleBack = () => setStep((s: number) => s - 1);
 
-  const handleSubmit = () => {
-    onConfirm({
-      ...formData,
-      tests: cart,
-      total,
-    });
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const result = await createOrder({
+        ...formData,
+        cart,
+        total,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Booking confirmed successfully!");
+        onConfirm({ ...formData, id: result.orderId }); // Pass generic data to clear state in parent
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const slots = [
@@ -57,7 +74,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onCo
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isSubmitting && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Complete Your Booking</DialogTitle>
@@ -215,7 +232,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onCo
         {/* Footer */}
         <DialogFooter className="sm:justify-between">
           {step > 1 ? (
-            <Button variant="ghost" onClick={handleBack} className="flex items-center gap-2">
+            <Button variant="ghost" onClick={handleBack} disabled={isSubmitting} className="flex items-center gap-2">
               <ChevronLeft className="w-4 h-4" />
               Back
             </Button>
@@ -223,9 +240,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onCo
             <div />
           )}
 
-          <Button onClick={step === 3 ? handleSubmit : handleNext} className="gap-2">
-            {step === 3 ? "Confirm Booking" : "Continue"}
-            <ChevronRight className="w-4 h-4" />
+          <Button onClick={step === 3 ? handleSubmit : handleNext} disabled={isSubmitting} className="gap-2">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
+              </>
+            ) : step === 3 ? (
+              <>
+                Confirm Booking
+                <ChevronRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

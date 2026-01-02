@@ -21,14 +21,15 @@ import { useCart } from "@/hooks/use-cart-provider";
 interface LandingPageProps {
   initialTests: PublicTest[];
   initialPackages: PublicPackage[];
+  initialOrders: Booking[];
 }
 
-export default function LandingPageClient({ initialTests, initialPackages }: LandingPageProps) {
+export default function LandingPageClient({ initialTests, initialPackages, initialOrders }: LandingPageProps) {
   const router = useRouter();
   const [activeView, setActiveView] = useState<"home" | "dashboard" | "admin">("home");
   const { cart, addToCart, removeFromCart, clearCart, isCartOpen, setIsCartOpen, total } = useCart();
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>(initialOrders);
 
   const { data: session } = authClient.useSession();
   const currentUser = session?.user;
