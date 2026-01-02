@@ -110,7 +110,7 @@ const authOptions = {
 		bearer(),
 		admin({
 			/* cspell:disable-next-line */
-			adminUserIds: ["EXD5zjob2SD6CBWcEQ6OpLRHcyoUbnaB"],
+			adminUserIds: ["CvzpWCiEZzYkiZLBFCwbrTUBQodJxpX7"],
 		}),
 		nextCookies(),
 		oneTap(),
