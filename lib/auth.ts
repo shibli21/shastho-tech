@@ -1,7 +1,6 @@
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { passkey } from "@better-auth/passkey";
 import { stripe } from "@better-auth/stripe";
-import { LibsqlDialect } from "@libsql/kysely-libsql";
 import type { BetterAuthOptions } from "better-auth";
 import { APIError, betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
@@ -20,44 +19,28 @@ import {
 	organization,
 	twoFactor,
 } from "better-auth/plugins";
-import { MysqlDialect } from "kysely";
-import { createPool } from "mysql2/promise";
 import { Stripe } from "stripe";
 import { reactInvitationEmail } from "./email/invitation";
 import { resend } from "./email/resend";
 import { reactResetPasswordEmail } from "./email/reset-password";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "@/db";
+import * as schema from "@/db/schema";
 
 const from = process.env.BETTER_AUTH_EMAIL || "delivered@resend.dev";
 const to = process.env.TEST_EMAIL || "";
 
-const dialect = (() => {
-	if (process.env.USE_MYSQL) {
-		if (!process.env.MYSQL_DATABASE_URL) {
-			throw new Error(
-				"Using MySQL dialect without MYSQL_DATABASE_URL. Please set it in your environment variables.",
-			);
-		}
-		return new MysqlDialect(createPool(process.env.MYSQL_DATABASE_URL || ""));
-	} else {
-		if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
-			return new LibsqlDialect({
-				url: process.env.TURSO_DATABASE_URL,
-				authToken: process.env.TURSO_AUTH_TOKEN,
-			});
-		}
-	}
-	return null;
-})();
-
-if (!dialect) {
-	throw new Error("No dialect found");
-}
 
 const authOptions = {
 	appName: "Better Auth Demo",
-	database: {
-		dialect,
-		type: "sqlite",
+	database: drizzleAdapter(db, {
+		provider: "pg",
+		schema: {
+			...schema,
+		},
+	}),
+	experimental: {
+		joins: true,
 	},
 	emailVerification: {
 		async sendVerificationEmail({ user, url }) {
@@ -146,10 +129,9 @@ const authOptions = {
 						inviteLink:
 							process.env.NODE_ENV === "development"
 								? `http://localhost:3000/accept-invitation/${data.id}`
-								: `${
-										process.env.BETTER_AUTH_URL ||
-										"https://demo.better-auth.com"
-									}/accept-invitation/${data.id}`,
+								: `${process.env.BETTER_AUTH_URL ||
+								"https://demo.better-auth.com"
+								}/accept-invitation/${data.id}`,
 					}),
 				});
 			},
@@ -249,7 +231,7 @@ const authOptions = {
 			validAudiences: [
 				process.env.BETTER_AUTH_URL || "https://demo.better-auth.com",
 				(process.env.BETTER_AUTH_URL || "https://demo.better-auth.com") +
-					"/api/mcp",
+				"/api/mcp",
 			],
 			selectAccount: {
 				page: "/oauth/select-account",
@@ -324,7 +306,7 @@ const authOptions = {
 		"exp://",
 		"https://appleid.apple.com",
 	],
-} satisfies BetterAuthOptions;
+};
 
 export const auth = betterAuth({
 	...authOptions,
