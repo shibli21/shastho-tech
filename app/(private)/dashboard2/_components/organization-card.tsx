@@ -217,7 +217,7 @@ const OrganizationCard = (props: { session: Session | null }) => {
                             {isCanceling ? <Loader2 className="animate-spin" size={16} /> : "Revoke"}
                           </Button>
                           <div>
-                            <CopyButton textToCopy={`${window.location.origin}/accept-invitation/${invitation.id}`} />
+                            <CopyButton value={`${window.location.origin}/accept-invitation/${invitation.id}`} />
                           </div>
                         </div>
                       </motion.div>

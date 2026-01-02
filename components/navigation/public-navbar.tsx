@@ -15,23 +15,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import { useCart } from "@/hooks/use-cart-provider";
+
 interface PublicNavbarProps {
-  cartCount?: number;
+  cartCount?: number; // Kept for backward compatibility if needed, but we'll use useCart
 }
 
 const navLinks = [
-  { href: "/tests", label: "Lab Tests" },
-  { href: "/packages", label: "Packages" },
+  { href: "/#tests", label: "Lab Tests" },
+  { href: "/#packages", label: "Health Packages" },
   { href: "/#how-it-works", label: "How it Works" },
   { href: "/labs", label: "Partner Labs" },
 ];
 
-export function PublicNavbar({ cartCount = 0 }: PublicNavbarProps) {
+export function PublicNavbar({ cartCount: propCartCount }: PublicNavbarProps) {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { data: session } = authClient.useSession();
+  const { cart, setIsCartOpen } = useCart();
+  const cartCount = propCartCount !== undefined ? propCartCount : cart.length;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,16 +99,14 @@ export function PublicNavbar({ cartCount = 0 }: PublicNavbarProps) {
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-background">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            <Button variant="ghost" size="icon" className="relative" onClick={() => setIsCartOpen(true)}>
+              <ShoppingCart className="w-5 h-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full ring-2 ring-background">
+                  {cartCount}
+                </span>
+              )}
+            </Button>
 
             {/* Auth buttons / User menu */}
             {user ? (

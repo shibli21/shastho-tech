@@ -6,6 +6,8 @@ import { getQueryClient } from "@/data/query-client";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
 
+import { CartProvider } from "@/hooks/use-cart-provider";
+
 type Props = {
   children: React.ReactNode;
 };
@@ -23,7 +25,7 @@ const Providers = ({ children }: Props) => {
           position="bottom"
         />
         <Toaster richColors closeButton />
-        {children}
+        <CartProvider>{children}</CartProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

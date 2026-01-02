@@ -45,7 +45,7 @@ export default function NewLabPage() {
 
     try {
       // Create organization with lab metadata
-      const metadata = JSON.stringify({
+      const metadata = {
         type: "lab",
         status: "pending",
         accreditations: formData.accreditations
@@ -60,7 +60,7 @@ export default function NewLabPage() {
         contactEmail: formData.contactEmail,
         rating: null,
         logoUrl: null,
-      });
+      };
 
       await authClient.organization.create({
         name: formData.name,

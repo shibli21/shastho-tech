@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 export default async function LabSettingsPage() {
   const requestHeaders = await headers();
   const session = await auth.api.getSession({ headers: requestHeaders });
+  // @ts-expect-error - activeOrganization is added by organization plugin
   const activeOrg = session?.activeOrganization;
   const metadata = activeOrg ? parseOrgMetadata(activeOrg.metadata) : null;
 

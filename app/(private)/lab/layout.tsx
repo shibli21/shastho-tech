@@ -12,8 +12,8 @@ export default async function LabLayout({ children }: { children: React.ReactNod
     redirect("/sign-in");
   }
 
-  // Verify user belongs to a lab organization
-  const activeOrg = session.activeOrganization;
+  // Get the active organization (uses activeOrganizationId from session)
+  const activeOrg = await auth.api.getFullOrganization({ headers: requestHeaders });
   const metadata = activeOrg ? parseOrgMetadata(activeOrg.metadata) : null;
 
   if (!metadata || metadata.type !== "lab") {
