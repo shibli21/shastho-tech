@@ -303,18 +303,8 @@ export const oauthConsent = pgTable("oauth_consent", {
   updatedAt: timestamp("updated_at"),
 });
 
-export const userRelations = relations(user, ({ many }) => ({
-  sessions: many(session),
-  accounts: many(account),
-  members: many(member),
-  invitations: many(invitation),
-  twoFactors: many(twoFactor),
-  passkeys: many(passkey),
-  oauthClients: many(oauthClient),
-  oauthRefreshTokens: many(oauthRefreshToken),
-  oauthAccessTokens: many(oauthAccessToken),
-  oauthConsents: many(oauthConsent),
-}));
+// userRelations moved to schema-mvp.ts to avoid circular deps and merge with app relations
+// export const userRelations = ...
 
 export const sessionRelations = relations(session, ({ one, many }) => ({
   user: one(user, {
