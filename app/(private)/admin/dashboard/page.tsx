@@ -1,12 +1,23 @@
 import { SectionCards, type SectionCardItem } from "@/components/section-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, FileText, Clock } from "lucide-react";
+import { db } from "@/db";
+import { usersTable } from "@/db/schema";
+import { orders, labs, reports } from "@/db/schema-mvp";
+import { count } from "drizzle-orm";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const [usersCount] = await db.select({ value: count() }).from(usersTable);
+  const [ordersCount] = await db.select({ value: count() }).from(orders);
+  const [labsCount] = await db.select({ value: count() }).from(labs);
+  // Simple sum for revenue (assuming totalAmount is in integer cents/currency)
+  // const [revenue] = await db.select({ value: sum(orders.totalAmount) }).from(orders);
+
+  // For MVP demo, formatted numbers
   const adminStats: SectionCardItem[] = [
     {
       title: "Total Users",
-      value: "0",
+      value: usersCount?.value.toString() || "0",
       trend: {
         label: "+0% from last month",
         value: "+0%",
@@ -15,7 +26,7 @@ export default function AdminDashboardPage() {
     },
     {
       title: "Total Orders",
-      value: "0",
+      value: ordersCount?.value.toString() || "0",
       trend: {
         label: "+0% from last month",
         value: "+0%",
@@ -24,12 +35,12 @@ export default function AdminDashboardPage() {
     },
     {
       title: "Partner Labs",
-      value: "0",
+      value: labsCount?.value.toString() || "0",
       footerLabel: "Active partners",
     },
     {
       title: "Revenue",
-      value: "৳0",
+      value: "৳0", // Placeholder until we have sum aggregation working with Drizzle types
       footerLabel: "This month",
     },
   ];

@@ -10,70 +10,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { Switch } from "@/components/ui/switch";
+import { createLab } from "@/app/actions/admin";
 
 export default function NewLabPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    slug: "",
-    contactEmail: "",
-    contactPhone: "",
-    accreditations: "",
-    serviceAreas: "",
-  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      // Auto-generate slug from name
-      ...(name === "name" && {
-        slug: value
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, ""),
-      }),
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: FormData) => {
     setIsLoading(true);
 
+    // Client-side slug generation if not provided is handled by server action logic (in a real app),
+    // but here we trust the user input or generate it for them.
+    // Let's generate slug if empty before sending?
+    // Actually, let's keep it simple and just submit.
+
     try {
-      // Create organization with lab metadata
-      const metadata = {
-        type: "lab",
-        status: "pending",
-        accreditations: formData.accreditations
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        serviceAreas: formData.serviceAreas
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        contactPhone: formData.contactPhone,
-        contactEmail: formData.contactEmail,
-        rating: null,
-        logoUrl: null,
-      };
-
-      await authClient.organization.create({
-        name: formData.name,
-        slug: formData.slug,
-        metadata,
-      });
-
-      toast.success("Lab partner created successfully!");
-      toast.info("You can now invite the lab owner via email.");
-      router.push("/admin/labs");
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || "Failed to create lab partner");
+      const result = await createLab(formData);
+      if (result && result.error) {
+        if (typeof result.error === "string") {
+          toast.error(result.error);
+        } else {
+          toast.error("Validation failed. Please check inputs.");
+          console.error(result.error);
+        }
+      } else {
+        toast.success("Lab partner created successfully!");
+      }
+    } catch (e) {
+      toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -97,86 +62,48 @@ export default function NewLabPage() {
         <CardHeader>
           <CardTitle>Lab Information</CardTitle>
           <CardDescription>
-            Enter the lab partner details. You can invite the lab owner after creating the organization.
+            Enter the lab partner details. This will create a public profile in the catalog.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form action={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Lab Name *</Label>
                 <Input
                   id="name"
                   name="name"
-                  value={formData.name}
-                  onChange={handleChange}
                   placeholder="Ibn Sina Diagnostic"
                   required
+                  onChange={(e) => {
+                    // Basic client-side helper to auto-fill slug
+                    const slugInput = document.getElementById("slug") as HTMLInputElement;
+                    if (slugInput && !slugInput.value) {
+                      slugInput.value = e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, "");
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slug">URL Slug *</Label>
-                <Input
-                  id="slug"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  placeholder="ibn-sina"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email *</Label>
-                <Input
-                  id="contactEmail"
-                  name="contactEmail"
-                  type="email"
-                  value={formData.contactEmail}
-                  onChange={handleChange}
-                  placeholder="labs@ibnsina.com"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contactPhone">Contact Phone</Label>
-                <Input
-                  id="contactPhone"
-                  name="contactPhone"
-                  type="tel"
-                  value={formData.contactPhone}
-                  onChange={handleChange}
-                  placeholder="+880-xxx-xxx"
-                />
+                <Input id="slug" name="slug" placeholder="ibn-sina" required />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="accreditations">Accreditations</Label>
-              <Input
-                id="accreditations"
-                name="accreditations"
-                value={formData.accreditations}
-                onChange={handleChange}
-                placeholder="NABL, ISO 15189 (comma separated)"
-              />
+              <Label htmlFor="address">Address</Label>
+              <Textarea id="address" name="address" placeholder="House #48, Road #9/A, Dhanmondi, Dhaka 1209" />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="serviceAreas">Service Areas</Label>
-              <Textarea
-                id="serviceAreas"
-                name="serviceAreas"
-                value={formData.serviceAreas}
-                onChange={handleChange}
-                placeholder="Dhaka, Chattogram, Sylhet (comma separated)"
-                rows={2}
-              />
+            <div className="flex items-center space-x-2">
+              <Switch id="isVerified" name="isVerified" />
+              <Label htmlFor="isVerified">Verify Lab (Show Verified Badge)</Label>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Lab Partner

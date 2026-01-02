@@ -42,9 +42,14 @@ const navMain = [
     icon: IconUsers,
   },
   {
-    title: "Tests & Packages",
+    title: "Diagnostic Tests",
     url: "/admin/tests",
     icon: IconDatabase,
+  },
+  {
+    title: "Health Packages",
+    url: "/admin/packages",
+    icon: IconPackage,
   },
   {
     title: "Partner Labs",
