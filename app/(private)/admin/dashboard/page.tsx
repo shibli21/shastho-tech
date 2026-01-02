@@ -1,63 +1,51 @@
+import { SectionCards, type SectionCardItem } from "@/components/section-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Package, Building2, TrendingUp, FileText, Clock } from "lucide-react";
+import { Package, FileText, Clock } from "lucide-react";
 
 export default function AdminDashboardPage() {
+  const adminStats: SectionCardItem[] = [
+    {
+      title: "Total Users",
+      value: "0",
+      trend: {
+        label: "+0% from last month",
+        value: "+0%",
+        direction: "up",
+      },
+    },
+    {
+      title: "Total Orders",
+      value: "0",
+      trend: {
+        label: "+0% from last month",
+        value: "+0%",
+        direction: "up",
+      },
+    },
+    {
+      title: "Partner Labs",
+      value: "0",
+      footerLabel: "Active partners",
+    },
+    {
+      title: "Revenue",
+      value: "৳0",
+      footerLabel: "This month",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
+      <div className="px-4 lg:px-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-1">Platform overview and key metrics</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Partner Labs</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">Active partners</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">৳0</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-      </div>
+      <SectionCards items={adminStats} />
 
       {/* Two column grid */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 px-4 md:grid-cols-2 lg:px-6">
         {/* Recent Orders */}
         <Card>
           <CardHeader>
