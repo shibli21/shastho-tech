@@ -1,5 +1,5 @@
 
-import { LabTest, HealthPackage } from './types';
+import { LabTest, HealthPackage } from '@/types/types';
 
 export const LAB_TESTS: LabTest[] = [
   { id: '1', name: 'Complete Blood Count (CBC)', category: 'Hematology', price: 450, description: 'Evaluation of overall health and detection of disorders like anemia.', turnaroundTime: '24 Hours' },

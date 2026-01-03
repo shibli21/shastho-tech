@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import { createLab } from "@/app/actions/admin";
 
 export default function NewLabPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
@@ -37,7 +35,7 @@ export default function NewLabPage() {
       } else {
         toast.success("Lab partner created successfully!");
       }
-    } catch (e) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsLoading(false);
@@ -62,11 +60,12 @@ export default function NewLabPage() {
         <CardHeader>
           <CardTitle>Lab Information</CardTitle>
           <CardDescription>
-            Enter the lab partner details. This will create a public profile in the catalog.
+            Enter the lab partner details. An invitation will be sent to the lab admin email.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-6">
+            {/* Basic Info */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Lab Name *</Label>
@@ -93,9 +92,38 @@ export default function NewLabPage() {
               </div>
             </div>
 
+            {/* Admin Invitation */}
+            <div className="space-y-2">
+              <Label htmlFor="adminEmail">Lab Admin Email *</Label>
+              <Input id="adminEmail" name="adminEmail" type="email" placeholder="admin@labname.com" required />
+              <p className="text-sm text-muted-foreground">
+                An invitation will be sent to this email to join as lab owner.
+              </p>
+            </div>
+
+            {/* Contact Info */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">Contact Phone</Label>
+                <Input id="contactPhone" name="contactPhone" type="tel" placeholder="+880 17XX-XXXXXX" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactEmail">Public Contact Email</Label>
+                <Input id="contactEmail" name="contactEmail" type="email" placeholder="info@labname.com" />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
               <Textarea id="address" name="address" placeholder="House #48, Road #9/A, Dhanmondi, Dhaka 1209" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serviceAreas">Service Areas</Label>
+              <Input id="serviceAreas" name="serviceAreas" placeholder="Dhaka, Chittagong, Sylhet" />
+              <p className="text-sm text-muted-foreground">
+                Comma-separated list of areas where this lab provides service.
+              </p>
             </div>
 
             <div className="flex items-center space-x-2">

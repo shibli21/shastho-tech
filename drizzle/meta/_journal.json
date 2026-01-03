@@ -22,6 +22,13 @@
       "when": 1767392116684,
       "tag": "0002_tricky_radioactive_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1767461577300,
+      "tag": "0003_greedy_guardsmen",
+      "breakpoints": true
     }
   ]
 }

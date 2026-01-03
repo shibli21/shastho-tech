@@ -2,20 +2,26 @@
 "use server";
 
 import { db } from "@/db";
-import { labs, tests, testCategories, packages, packageTests, labTests, orders } from "@/db/schema";
+import { labs, tests, testCategories, packages, packageTests, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import type { LabMetadata } from "@/lib/shared";
 
 // --- Types & Schemas ---
 
 const LabSchema = z.object({
-    name: z.string().min(1),
-    slug: z.string().min(1),
+    name: z.string().min(1, "Lab name is required"),
+    slug: z.string().min(1, "Slug is required"),
     address: z.string().optional(),
     logo: z.string().optional(),
-    rating: z.string().optional(), // Decimal as string from form
+    adminEmail: z.string().email("Valid admin email is required"),
+    contactPhone: z.string().optional(),
+    contactEmail: z.string().email().optional(),
+    serviceAreas: z.string().optional(), // Comma-separated areas
     isVerified: z.boolean().optional(),
 });
 
@@ -47,10 +53,22 @@ export async function getLabs() {
 }
 
 export async function createLab(formData: FormData) {
+    const requestHeaders = await headers();
+
+    // Check admin session
+    const session = await auth.api.getSession({ headers: requestHeaders });
+    if (!session || session.user.role !== "admin") {
+        return { error: "Unauthorized. Admin access required." };
+    }
+
     const data = {
         name: formData.get("name") as string,
         slug: formData.get("slug") as string,
         address: formData.get("address") as string,
+        adminEmail: formData.get("adminEmail") as string,
+        contactPhone: formData.get("contactPhone") as string,
+        contactEmail: formData.get("contactEmail") as string,
+        serviceAreas: formData.get("serviceAreas") as string,
         isVerified: formData.get("isVerified") === "on",
     };
 
@@ -60,11 +78,57 @@ export async function createLab(formData: FormData) {
     }
 
     try {
+        // 1. Create Better Auth organization with lab metadata
+        const labMetadata: LabMetadata = {
+            type: "lab",
+            status: parsed.data.isVerified ? "active" : "pending",
+            accreditations: [],
+            serviceAreas: parsed.data.serviceAreas?.split(",").map(s => s.trim()).filter(Boolean) || [],
+            contactPhone: parsed.data.contactPhone || "",
+            contactEmail: parsed.data.contactEmail || parsed.data.adminEmail,
+            rating: null,
+            logoUrl: parsed.data.logo || null,
+        };
+
+        const orgResult = await auth.api.createOrganization({
+            headers: requestHeaders,
+            body: {
+                name: parsed.data.name,
+                slug: parsed.data.slug,
+                logo: parsed.data.logo,
+                metadata: labMetadata as unknown as Record<string, unknown>,
+            },
+        });
+
+        if (!orgResult) {
+            return { error: "Failed to create organization." };
+        }
+
+        // 2. Insert lab record linked to organization
         await db.insert(labs).values({
-            ...parsed.data,
+            organizationId: orgResult.id,
+            name: parsed.data.name,
+            slug: parsed.data.slug,
+            address: parsed.data.address,
+            logo: parsed.data.logo,
+            contactEmail: parsed.data.contactEmail || parsed.data.adminEmail,
+            contactPhone: parsed.data.contactPhone,
+            serviceAreas: parsed.data.serviceAreas,
             isVerified: parsed.data.isVerified || false,
         });
-    } catch {
+
+        // 3. Invite lab admin via email
+        await auth.api.createInvitation({
+            headers: requestHeaders,
+            body: {
+                email: parsed.data.adminEmail,
+                role: "owner",
+                organizationId: orgResult.id,
+            },
+        });
+
+    } catch (e) {
+        console.error("Failed to create lab:", e);
         return { error: "Failed to create lab. Slug might be duplicate." };
     }
 
@@ -200,7 +264,7 @@ export async function getAdminOrders() {
     });
 }
 
-export async function updateOrderStatus(orderId: string, status: "pending" | "confirmed" | "collected" | "processing" | "completed" | "cancelled") {
+export async function updateOrderStatus(orderId: string, status: "pending" | "confirmed" | "assigned" | "collected" | "processing" | "completed" | "cancelled") {
     try {
         await db.update(orders)
             .set({ status })

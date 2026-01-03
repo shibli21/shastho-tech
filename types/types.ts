@@ -1,5 +1,5 @@
 
-export type BookingStatus = 'pending' | 'confirmed' | 'collected' | 'processing' | 'completed';
+export type BookingStatus = 'pending' | 'confirmed' | 'assigned' | 'collected' | 'processing' | 'completed' | 'cancelled';
 
 export interface User {
   id: string;

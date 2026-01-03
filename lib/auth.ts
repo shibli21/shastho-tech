@@ -37,7 +37,7 @@ const authOptions = {
 		joins: true,
 	},
 	emailVerification: {
-		async sendVerificationEmail({ user, url }) {
+		async sendVerificationEmail({ user, url }: { user: { email: string }; url: string }) {
 			const res = await resend.emails.send({
 				from,
 				to: to || user.email,
@@ -54,7 +54,7 @@ const authOptions = {
 	},
 	emailAndPassword: {
 		enabled: true,
-		async sendResetPassword({ user, url }) {
+		async sendResetPassword({ user, url }: { user: { email: string }; url: string }) {
 			await resend.emails.send({
 				from,
 				to: user.email,

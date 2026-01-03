@@ -42,15 +42,11 @@ export default function LandingPageClient({ initialTests, initialPackages, initi
     setIsBookingModalOpen(true);
   };
 
-  const handleCreateBooking = (bookingData: Omit<Booking, "id" | "userId" | "status" | "createdAt">) => {
-    const newBooking: Booking = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      userId: currentUser?.id || "guest",
-      ...bookingData,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    };
-    setBookings((prev) => [newBooking, ...prev]);
+  const handleCreateBooking = (bookingData: { id?: string }) => {
+    // Booking was created server-side, just update UI state
+    if (bookingData.id) {
+      // Refresh orders from server would be ideal, but for now just clear cart and show dashboard
+    }
     clearCart();
     setIsBookingModalOpen(false);
     setIsCartOpen(false);

@@ -1,7 +1,7 @@
 
 import { boolean, date, decimal, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { user, session, account, member, invitation, twoFactor, passkey, oauthClient, oauthRefreshToken, oauthAccessToken, oauthConsent } from "./auth-schema";
+import { user, session, account, member, invitation, twoFactor, passkey, oauthClient, oauthRefreshToken, oauthAccessToken, oauthConsent, organization } from "./auth-schema";
 
 // Enums
 export const bookingStatusEnum = pgEnum("booking_status", [
@@ -23,10 +23,14 @@ export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 // Labs
 export const labs = pgTable("labs", {
     id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: text("organization_id").references(() => organization.id, { onDelete: "cascade" }).unique(),
     name: text("name").notNull(),
     slug: text("slug").unique().notNull(),
     logo: text("logo"),
     address: text("address"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    serviceAreas: text("service_areas"), // JSON array as string
     rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
     isVerified: boolean("is_verified").default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -126,6 +130,8 @@ export const orders = pgTable("orders", {
     scheduledDate: date("scheduled_date").notNull(),
     scheduledTimeSlot: text("scheduled_time_slot").notNull(),
     addressId: uuid("address_id").references(() => addresses.id),
+    assignedLabId: uuid("assigned_lab_id").references(() => labs.id),
+    assignedAt: timestamp("assigned_at"),
     notes: text("notes"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -154,8 +160,13 @@ export const reports = pgTable("reports", {
 });
 
 // Relations
-export const labsRelations = relations(labs, ({ many }) => ({
+export const labsRelations = relations(labs, ({ one, many }) => ({
+    organization: one(organization, {
+        fields: [labs.organizationId],
+        references: [organization.id],
+    }),
     labTests: many(labTests),
+    assignedOrders: many(orders),
 }));
 
 export const testsRelations = relations(tests, ({ one, many }) => ({
@@ -201,6 +212,10 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     address: one(addresses, {
         fields: [orders.addressId],
         references: [addresses.id],
+    }),
+    assignedLab: one(labs, {
+        fields: [orders.assignedLabId],
+        references: [labs.id],
     }),
     items: many(orderItems),
 }));

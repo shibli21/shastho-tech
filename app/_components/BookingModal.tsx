@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { User, MapPin, CreditCard, ChevronRight, ChevronLeft, CheckCircle2, Loader2 } from "lucide-react";
-import { LabTest, Booking } from "@/types/types";
+import { LabTest } from "@/types/types";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   cart: LabTest[];
-  onConfirm: (bookingData: Partial<Booking>) => void;
+  onConfirm: (bookingData: { id?: string }) => void;
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, cart, onConfirm }) => {

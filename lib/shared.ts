@@ -49,7 +49,8 @@ export function getDashboardPath(session: Session | null): string {
 	}
 
 	// Lab partner - check if user belongs to a lab organization
-	const activeOrg = session.activeOrganization;
+	// activeOrganization is added by organization plugin but not in base Session type
+	const activeOrg = (session as unknown as { activeOrganization?: { metadata?: string | Record<string, unknown> } }).activeOrganization;
 	if (activeOrg) {
 		const metadata = parseOrgMetadata(activeOrg.metadata);
 		if (metadata?.type === "lab") {
@@ -72,8 +73,10 @@ export function isAdmin(session: Session | null): boolean {
  * Check if user is a lab partner
  */
 export function isLabPartner(session: Session | null): boolean {
-	if (!session?.activeOrganization) return false;
-	const metadata = parseOrgMetadata(session.activeOrganization.metadata);
+	if (!session) return false;
+	const sessionWithOrg = session as unknown as { activeOrganization?: { metadata?: string | Record<string, unknown> } };
+	if (!sessionWithOrg.activeOrganization) return false;
+	const metadata = parseOrgMetadata(sessionWithOrg.activeOrganization.metadata);
 	return metadata?.type === "lab";
 }
 

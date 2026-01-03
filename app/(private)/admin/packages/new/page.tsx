@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +24,8 @@ export default function NewPackagePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initial State for useActionState
-  const initialState = {
-    message: null,
-    errors: {},
-  };
+  // Initial State for useActionState - matches createPackage return type
+  const initialState: { error?: unknown } | undefined = undefined;
 
   const [state, formAction] = useActionState(createPackage, initialState);
 
