@@ -182,6 +182,17 @@ export const packageTestsRelations = relations(packageTests, ({ one }) => ({
     }),
 }));
 
+export const labTestsRelations = relations(labTests, ({ one }) => ({
+    lab: one(labs, {
+        fields: [labTests.labId],
+        references: [labs.id],
+    }),
+    test: one(tests, {
+        fields: [labTests.testId],
+        references: [tests.id],
+    }),
+}));
+
 export const ordersRelations = relations(orders, ({ one, many }) => ({
     user: one(user, {
         fields: [orders.userId],
