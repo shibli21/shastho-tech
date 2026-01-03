@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Plus, MoreHorizontal } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 import { getLabs } from "@/app/actions/admin";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LabActions } from "./_components/LabActions";
 
 export default async function AdminLabsPage() {
   const labs = await getLabs();
@@ -74,18 +69,7 @@ export default async function AdminLabsPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Edit details</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500">Delete lab</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <LabActions labId={lab.id} labName={lab.name} />
                     </TableCell>
                   </TableRow>
                 ))}

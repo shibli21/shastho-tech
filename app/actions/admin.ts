@@ -136,6 +136,139 @@ export async function createLab(formData: FormData) {
     redirect("/admin/labs");
 }
 
+export async function getLab(id: string) {
+    const [lab] = await db.select().from(labs).where(eq(labs.id, id)).limit(1);
+    return lab || null;
+}
+
+const UpdateLabSchema = z.object({
+    name: z.string().min(1, "Lab name is required"),
+    slug: z.string().min(1, "Slug is required"),
+    address: z.string().optional(),
+    contactPhone: z.string().optional(),
+    contactEmail: z.string().email().optional().or(z.literal("")),
+    serviceAreas: z.string().optional(),
+    isVerified: z.boolean().optional(),
+});
+
+export async function updateLab(id: string, formData: FormData) {
+    const requestHeaders = await headers();
+
+    // Check admin session
+    const session = await auth.api.getSession({ headers: requestHeaders });
+    if (!session || session.user.role !== "admin") {
+        return { error: "Unauthorized. Admin access required." };
+    }
+
+    const data = {
+        name: formData.get("name") as string,
+        slug: formData.get("slug") as string,
+        address: formData.get("address") as string,
+        contactPhone: formData.get("contactPhone") as string,
+        contactEmail: formData.get("contactEmail") as string,
+        serviceAreas: formData.get("serviceAreas") as string,
+        isVerified: formData.get("isVerified") === "on",
+    };
+
+    const parsed = UpdateLabSchema.safeParse(data);
+    if (!parsed.success) {
+        return { error: parsed.error.flatten() };
+    }
+
+    try {
+        // Get existing lab to find organization ID
+        const existingLab = await getLab(id);
+        if (!existingLab) {
+            return { error: "Lab not found." };
+        }
+
+        // Update lab record
+        await db.update(labs)
+            .set({
+                name: parsed.data.name,
+                slug: parsed.data.slug,
+                address: parsed.data.address,
+                contactPhone: parsed.data.contactPhone,
+                contactEmail: parsed.data.contactEmail || undefined,
+                serviceAreas: parsed.data.serviceAreas,
+                isVerified: parsed.data.isVerified || false,
+                updatedAt: new Date(),
+            })
+            .where(eq(labs.id, id));
+
+        // Update organization if linked
+        if (existingLab.organizationId) {
+            const labMetadata: LabMetadata = {
+                type: "lab",
+                status: parsed.data.isVerified ? "active" : "pending",
+                accreditations: [],
+                serviceAreas: parsed.data.serviceAreas?.split(",").map(s => s.trim()).filter(Boolean) || [],
+                contactPhone: parsed.data.contactPhone || "",
+                contactEmail: parsed.data.contactEmail || "",
+                rating: null,
+                logoUrl: existingLab.logo || null,
+            };
+
+            await auth.api.updateOrganization({
+                headers: requestHeaders,
+                body: {
+                    organizationId: existingLab.organizationId,
+                    data: {
+                        name: parsed.data.name,
+                        slug: parsed.data.slug,
+                        metadata: labMetadata as unknown as Record<string, unknown>,
+                    },
+                },
+            });
+        }
+
+    } catch (e) {
+        console.error("Failed to update lab:", e);
+        return { error: "Failed to update lab. Slug might be duplicate." };
+    }
+
+    revalidatePath("/admin/labs");
+    redirect("/admin/labs");
+}
+
+export async function deleteLab(id: string) {
+    const requestHeaders = await headers();
+
+    // Check admin session
+    const session = await auth.api.getSession({ headers: requestHeaders });
+    if (!session || session.user.role !== "admin") {
+        return { error: "Unauthorized. Admin access required." };
+    }
+
+    try {
+        // Get lab to find organization ID
+        const existingLab = await getLab(id);
+        if (!existingLab) {
+            return { error: "Lab not found." };
+        }
+
+        // Delete organization first (cascade will handle associated data)
+        if (existingLab.organizationId) {
+            await auth.api.deleteOrganization({
+                headers: requestHeaders,
+                body: {
+                    organizationId: existingLab.organizationId,
+                },
+            });
+        }
+
+        // Delete lab record
+        await db.delete(labs).where(eq(labs.id, id));
+
+    } catch (e) {
+        console.error("Failed to delete lab:", e);
+        return { error: "Failed to delete lab." };
+    }
+
+    revalidatePath("/admin/labs");
+    return { success: true };
+}
+
 // --- Tests Actions ---
 
 export async function getTests() {
