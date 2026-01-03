@@ -281,3 +281,90 @@ export async function getLabStats() {
         reportsThisMonth: completedCount, // Simplified - could query reports table
     };
 }
+
+// --- Update Order Status (Lab) ---
+
+export async function updateLabOrderStatus(
+    orderId: string,
+    status: "collected" | "processing" | "completed"
+) {
+    const result = await getCurrentLab();
+    if ("error" in result) {
+        return { error: result.error };
+    }
+
+    const { lab } = result;
+
+    try {
+        // Verify this order belongs to this lab
+        const [existingOrder] = await db
+            .select()
+            .from(orders)
+            .where(and(
+                eq(orders.id, orderId),
+                eq(orders.assignedLabId, lab.id)
+            ))
+            .limit(1);
+
+        if (!existingOrder) {
+            return { error: "Order not found or not assigned to your lab" };
+        }
+
+        await db
+            .update(orders)
+            .set({
+                status,
+                updatedAt: new Date(),
+            })
+            .where(eq(orders.id, orderId));
+
+        revalidatePath("/lab/orders");
+        revalidatePath("/lab/dashboard");
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to update order status:", e);
+        return { error: "Failed to update order status" };
+    }
+}
+
+// --- Get Lab Reports ---
+
+export async function getLabReports() {
+    const result = await getCurrentLab();
+    if ("error" in result) {
+        return [];
+    }
+
+    const { lab } = result;
+
+    // Get all orders with reported items for this lab
+    const labOrders = await db.query.orders.findMany({
+        where: eq(orders.assignedLabId, lab.id),
+        with: {
+            user: true,
+            items: {
+                where: eq(orderItems.status, "reported"),
+                with: {
+                    test: true,
+                    package: true,
+                    patient: true,
+                    reports: true,
+                },
+            },
+        },
+        orderBy: desc(orders.createdAt),
+    });
+
+    // Flatten to get reported items with order info
+    return labOrders.flatMap(order =>
+        order.items.map(item => ({
+            ...item,
+            order: {
+                id: order.id,
+                scheduledDate: order.scheduledDate,
+                user: order.user,
+            },
+        }))
+    );
+}
+
