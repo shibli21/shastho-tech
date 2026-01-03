@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "@/db";
-import { labs, tests, testCategories, packages, packageTests, orders } from "@/db/schema";
+import { labs, tests, testCategories, packages, packageTests, orders, orderStatusHistory } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -397,16 +397,114 @@ export async function getAdminOrders() {
     });
 }
 
-export async function updateOrderStatus(orderId: string, status: "pending" | "confirmed" | "assigned" | "collected" | "processing" | "completed" | "cancelled") {
+export async function updateOrderStatus(
+    orderId: string,
+    status: "pending" | "confirmed" | "assigned" | "collected" | "processing" | "completed" | "cancelled",
+    notes?: string
+) {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({ headers: requestHeaders });
+
+    if (!session || session.user.role !== "admin") {
+        return { error: "Unauthorized. Admin access required." };
+    }
+
     try {
+        // Update order status
         await db.update(orders)
-            .set({ status })
+            .set({ status, updatedAt: new Date() })
             .where(eq(orders.id, orderId));
 
+        // Record status change in history
+        await db.insert(orderStatusHistory).values({
+            orderId,
+            status,
+            changedBy: session.user.id,
+            notes,
+        });
+
         revalidatePath("/admin/orders");
+        revalidatePath(`/admin/orders/${orderId}`);
+        revalidatePath("/dashboard/orders");
         return { success: true };
-    } catch {
-        console.error("Failed to update status");
+    } catch (e) {
+        console.error("Failed to update status:", e);
         return { error: "Failed to update order status." };
+    }
+}
+
+export async function getAdminOrderDetails(orderId: string) {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({ headers: requestHeaders });
+
+    if (!session || session.user.role !== "admin") {
+        return null;
+    }
+
+    return await db.query.orders.findFirst({
+        where: eq(orders.id, orderId),
+        with: {
+            user: true,
+            address: true,
+            assignedLab: true,
+            items: {
+                with: {
+                    test: {
+                        with: {
+                            category: true,
+                        }
+                    },
+                    package: true,
+                    patient: true,
+                    reports: true,
+                }
+            },
+            statusHistory: {
+                orderBy: (sh, { asc }) => asc(sh.createdAt),
+                with: {
+                    changedByUser: true,
+                }
+            },
+        },
+    });
+}
+
+export async function assignLabToOrder(orderId: string, labId: string) {
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({ headers: requestHeaders });
+
+    if (!session || session.user.role !== "admin") {
+        return { error: "Unauthorized. Admin access required." };
+    }
+
+    try {
+        // Get lab name for notes
+        const [lab] = await db.select({ name: labs.name }).from(labs).where(eq(labs.id, labId)).limit(1);
+
+        // Update order with assigned lab and status
+        await db.update(orders)
+            .set({
+                assignedLabId: labId,
+                assignedAt: new Date(),
+                status: "assigned",
+                updatedAt: new Date(),
+            })
+            .where(eq(orders.id, orderId));
+
+        // Record status change
+        await db.insert(orderStatusHistory).values({
+            orderId,
+            status: "assigned",
+            changedBy: session.user.id,
+            notes: `Lab assigned: ${lab?.name || 'Unknown'}`,
+        });
+
+        revalidatePath("/admin/orders");
+        revalidatePath(`/admin/orders/${orderId}`);
+        revalidatePath("/lab/orders");
+        return { success: true };
+    } catch (e) {
+        console.error("Failed to assign lab:", e);
+        return { error: "Failed to assign lab to order." };
     }
 }

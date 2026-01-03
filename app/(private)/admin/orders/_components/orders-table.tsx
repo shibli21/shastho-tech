@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BookingStatus } from "@/types/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye } from "lucide-react";
 import { updateOrderStatus } from "@/app/actions/admin";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 interface Order {
   id: string;
@@ -99,7 +100,15 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             ) : (
               orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{order.id.slice(0, 8)}...</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Eye className="w-3 h-3" />
+                      {order.id.slice(0, 8)}...
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium">{order.user?.name || "Guest"}</span>

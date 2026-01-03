@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "@/db";
-import { orders, orderItems, addresses, familyMembers } from "@/db/schema-mvp";
+import { orders, orderItems, addresses, familyMembers, orderStatusHistory } from "@/db/schema-mvp";
 import { auth } from "@/lib/auth"; // Server-side auth
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -111,7 +111,16 @@ export async function createOrder(data: CreateOrderInput) {
             await db.insert(orderItems).values(orderItemsData);
         }
 
+        // Record initial status in history
+        await db.insert(orderStatusHistory).values({
+            orderId: newOrder.id,
+            status: "pending",
+            changedBy: userId,
+            notes: "Order placed",
+        });
+
         revalidatePath("/dashboard");
+        revalidatePath("/dashboard/orders");
         revalidatePath("/admin/orders");
 
         return { success: true, orderId: newOrder.id };
@@ -199,3 +208,53 @@ export async function getUserOrders(): Promise<Booking[]> {
     });
 }
 
+export async function getUserOrderDetails(orderId: string) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session?.user) {
+        return null;
+    }
+
+    const order = await db.query.orders.findFirst({
+        where: eq(orders.id, orderId),
+        with: {
+            user: true,
+            address: true,
+            assignedLab: true,
+            items: {
+                with: {
+                    test: {
+                        with: {
+                            category: true,
+                        }
+                    },
+                    package: true,
+                    patient: true,
+                    reports: true,
+                }
+            },
+            statusHistory: {
+                orderBy: (sh, { asc }) => asc(sh.createdAt),
+            },
+        },
+    });
+
+    // Verify the order belongs to the user
+    if (!order || order.userId !== session.user.id) {
+        return null;
+    }
+
+    return order;
+}
+
+// Record initial status when order is created
+export async function recordInitialOrderStatus(orderId: string, userId: string) {
+    await db.insert(orderStatusHistory).values({
+        orderId,
+        status: "pending",
+        changedBy: userId,
+        notes: "Order placed",
+    });
+}

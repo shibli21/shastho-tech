@@ -159,6 +159,16 @@ export const reports = pgTable("reports", {
     notes: text("notes"),
 });
 
+// Order Status History - tracks all status changes with timestamps
+export const orderStatusHistory = pgTable("order_status_history", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "cascade" }).notNull(),
+    status: bookingStatusEnum("status").notNull(),
+    changedBy: text("changed_by").references(() => user.id), // Who made the change (null for system)
+    notes: text("notes"), // Optional notes (e.g., "Lab assigned: Ibn Sina")
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const labsRelations = relations(labs, ({ one, many }) => ({
     organization: one(organization, {
@@ -218,6 +228,7 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
         references: [labs.id],
     }),
     items: many(orderItems),
+    statusHistory: many(orderStatusHistory),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one, many }) => ({
@@ -248,6 +259,17 @@ export const reportsRelations = relations(reports, ({ one }) => ({
     orderItem: one(orderItems, {
         fields: [reports.orderItemId],
         references: [orderItems.id],
+    }),
+}));
+
+export const orderStatusHistoryRelations = relations(orderStatusHistory, ({ one }) => ({
+    order: one(orders, {
+        fields: [orderStatusHistory.orderId],
+        references: [orders.id],
+    }),
+    changedByUser: one(user, {
+        fields: [orderStatusHistory.changedBy],
+        references: [user.id],
     }),
 }));
 

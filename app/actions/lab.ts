@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { labs, orders, orderItems, labTests, reports } from "@/db/schema";
+import { labs, orders, orderItems, labTests, reports, orderStatusHistory } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -293,7 +293,7 @@ export async function updateLabOrderStatus(
         return { error: result.error };
     }
 
-    const { lab } = result;
+    const { lab, session } = result;
 
     try {
         // Verify this order belongs to this lab
@@ -318,8 +318,18 @@ export async function updateLabOrderStatus(
             })
             .where(eq(orders.id, orderId));
 
+        // Record status change in history
+        await db.insert(orderStatusHistory).values({
+            orderId,
+            status,
+            changedBy: session.user.id,
+            notes: `Status updated by ${lab.name}`,
+        });
+
         revalidatePath("/lab/orders");
         revalidatePath("/lab/dashboard");
+        revalidatePath("/dashboard/orders");
+        revalidatePath(`/dashboard/orders/${orderId}`);
         return { success: true };
     } catch (e) {
         console.error("Failed to update order status:", e);
