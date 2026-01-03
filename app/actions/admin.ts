@@ -2,7 +2,7 @@
 "use server";
 
 import { db } from "@/db";
-import { labs, tests, testCategories, packages, packageTests, labTests } from "@/db/schema";
+import { labs, tests, testCategories, packages, packageTests, labTests, orders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -64,7 +64,7 @@ export async function createLab(formData: FormData) {
             ...parsed.data,
             isVerified: parsed.data.isVerified || false,
         });
-    } catch (e) {
+    } catch {
         return { error: "Failed to create lab. Slug might be duplicate." };
     }
 
@@ -108,7 +108,7 @@ export async function createTest(formData: FormData) {
             ...parsed.data,
             fastingRequired: parsed.data.fastingRequired || false,
         });
-    } catch (e) {
+    } catch {
         return { error: "Failed to create test. Code might be duplicate." };
     }
 
@@ -131,7 +131,7 @@ export async function getPackages() {
     });
 }
 
-export async function createPackage(prevState: any, formData: FormData) {
+export async function createPackage(prevState: unknown, formData: FormData) {
     const testIds = formData.getAll("testIds") as string[];
 
     const data = {
@@ -180,4 +180,36 @@ export async function createPackage(prevState: any, formData: FormData) {
 
     revalidatePath("/admin/packages");
     redirect("/admin/packages");
+}
+
+// --- Orders Actions ---
+
+export async function getAdminOrders() {
+    return await db.query.orders.findMany({
+        with: {
+            user: true,
+            address: true,
+            items: {
+                with: {
+                    test: true,
+                    package: true,
+                }
+            }
+        },
+        orderBy: desc(orders.createdAt),
+    });
+}
+
+export async function updateOrderStatus(orderId: string, status: "pending" | "confirmed" | "collected" | "processing" | "completed" | "cancelled") {
+    try {
+        await db.update(orders)
+            .set({ status })
+            .where(eq(orders.id, orderId));
+
+        revalidatePath("/admin/orders");
+        return { success: true };
+    } catch {
+        console.error("Failed to update status");
+        return { error: "Failed to update order status." };
+    }
 }
