@@ -2,12 +2,12 @@ import { SectionCards, type SectionCardItem } from "@/components/section-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, FileText, Clock } from "lucide-react";
 import { db } from "@/db";
-import { usersTable } from "@/db/schema";
+import { user } from "@/db/schema";
 import { orders, labs, reports } from "@/db/schema-mvp";
 import { count } from "drizzle-orm";
 
 export default async function AdminDashboardPage() {
-  const [usersCount] = await db.select({ value: count() }).from(usersTable);
+  const [usersCount] = await db.select({ value: count() }).from(user);
   const [ordersCount] = await db.select({ value: count() }).from(orders);
   const [labsCount] = await db.select({ value: count() }).from(labs);
   // Simple sum for revenue (assuming totalAmount is in integer cents/currency)
