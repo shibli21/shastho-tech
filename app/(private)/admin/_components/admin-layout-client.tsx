@@ -107,9 +107,7 @@ export function AdminLayoutClient({ children, user }: AdminLayoutClientProps) {
         navSecondary={navSecondary}
       />
       <SidebarInset>
-        <SiteHeader>
-          <h1 className="text-base font-semibold">Admin Dashboard</h1>
-        </SiteHeader>
+        <SiteHeader></SiteHeader>
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
